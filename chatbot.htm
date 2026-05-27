@@ -1,0 +1,936 @@
+<!-- ════════ CHATBOT WIDGET ════════ -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+  #dc-wrap* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Nunito', 'Segoe UI', sans-serif
+  }
+
+  #dc-wrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99990;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px
+  }
+
+  /* FAB */
+  #dc-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #B88B4A;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(184, 139, 74, .4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .2s, box-shadow .2s;
+    position: relative;
+    outline: none
+  }
+
+  #dc-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 24px rgba(184, 139, 74, .5)
+  }
+
+  #dc-btn::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid rgba(184, 139, 74, .3);
+    animation: dc-ring 2.4s ease-out infinite;
+    pointer-events: none
+  }
+
+  @keyframes dc-ring {
+    0% {
+      transform: scale(1);
+      opacity: .8
+    }
+
+    100% {
+      transform: scale(1.5);
+      opacity: 0
+    }
+  }
+
+  #dc-btn svg {
+    width: 25px;
+    height: 25px;
+    fill: #fff;
+    transition: opacity .15s;
+    position: absolute
+  }
+
+  #dc-btn .dc-ico-chat {
+    opacity: 1
+  }
+
+  #dc-btn .dc-ico-x {
+    opacity: 0
+  }
+
+  #dc-btn.dc-open .dc-ico-chat {
+    opacity: 0
+  }
+
+  #dc-btn.dc-open .dc-ico-x {
+    opacity: 1
+  }
+
+  #dc-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity .3s, transform .3s cubic-bezier(.34, 1.56, .64, 1);
+    pointer-events: none
+  }
+
+  #dc-badge.dc-show {
+    opacity: 1;
+    transform: scale(1)
+  }
+
+  /* WINDOW */
+  #dc-win {
+    width: 355px;
+    height: 540px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, .08);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, .15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(16px) scale(.94);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform .28s cubic-bezier(.34, 1.4, .64, 1), opacity .2s
+  }
+
+  #dc-win.dc-show {
+    display: flex;
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: all
+  }
+
+  /* HEADER */
+  .dc-head {
+    background: linear-gradient(135deg, #7a5c2e, #B88B4A);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0
+  }
+
+  .dc-avatar-wrap {
+    position: relative;
+    flex-shrink: 0
+  }
+
+  .dc-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: 2px solid rgba(255, 255, 255, .4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px
+  }
+
+  .dc-online-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #d4aa6a;
+    border: 2px solid #7a5c2e;
+    animation: dc-pulse-dot 2s infinite
+  }
+
+  @keyframes dc-pulse-dot {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(212, 170, 106, .5)
+    }
+
+    50% {
+      box-shadow: 0 0 0 3px rgba(212, 170, 106, 0)
+    }
+  }
+
+  .dc-hinfo {
+    flex: 1
+  }
+
+  .dc-hinfo h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+    line-height: 1
+  }
+
+  .dc-hinfo small {
+    font-size: 11px;
+    color: rgba(255, 255, 255, .75)
+  }
+
+  .dc-hbtn {
+    background: rgba(255, 255, 255, .15);
+    border: 1px solid rgba(255, 255, 255, .2);
+    color: rgba(255, 255, 255, .9);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    transition: background .18s;
+    line-height: 1
+  }
+
+  .dc-hbtn:hover {
+    background: rgba(255, 255, 255, .28);
+    color: #fff
+  }
+
+  /* BODY */
+  .dc-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+    background: #f0f7ff
+  }
+
+  .dc-body::-webkit-scrollbar {
+    width: 3px
+  }
+
+  .dc-body::-webkit-scrollbar-thumb {
+    background: #d4aa6a;
+    border-radius: 3px
+  }
+
+  /* MESSAGES */
+  .dc-msg {
+    display: flex;
+    gap: 7px;
+    align-items: flex-end;
+    animation: dc-in .2s ease both
+  }
+
+  .dc-msg.dc-user {
+    flex-direction: row-reverse
+  }
+
+  .dc-mavatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center
+  }
+
+  .dc-msg.dc-bot .dc-mavatar {
+    background: #B88B4A;
+    color: #fff
+  }
+
+  .dc-msg.dc-user .dc-mavatar {
+    background: #e2e8f0
+  }
+
+  .dc-bgroup {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 80%;
+    min-width: 0
+  }
+
+  .dc-bubble {
+    padding: 9px 13px;
+    font-size: 13px;
+    line-height: 1.55;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word
+  }
+
+  .dc-msg.dc-bot .dc-bubble {
+    background: #fff;
+    color: #1e3a5f;
+    border-radius: 14px 14px 14px 4px;
+    border: 1px solid rgba(0, 0, 0, .07);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .06)
+  }
+
+  .dc-msg.dc-user .dc-bubble {
+    background: #B88B4A;
+    color: #fff;
+    border-radius: 14px 14px 4px 14px;
+    box-shadow: 0 2px 8px rgba(184, 139, 74, .3)
+  }
+
+  .dc-bubble strong {
+    color: #1e3a5f
+  }
+
+  .dc-msg.dc-user .dc-bubble strong {
+    color: #e8d5b0
+  }
+
+  .dc-bubble ul {
+    padding-left: 16px;
+    margin: 4px 0 0
+  }
+
+  .dc-bubble li {
+    margin-bottom: 3px;
+    line-height: 1.5
+  }
+
+  .dc-time {
+    font-size: 10px;
+    color: #9fada6;
+    padding: 0 3px
+  }
+
+  .dc-msg.dc-user .dc-time {
+    text-align: right
+  }
+
+  /* TYPING */
+  .dc-typing .dc-bubble {
+    padding: 11px 14px;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .07);
+    border-radius: 14px 14px 14px 4px
+  }
+
+  .dc-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center
+  }
+
+  .dc-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #B88B4A;
+    opacity: .3;
+    animation: dc-bounce .9s infinite
+  }
+
+  .dc-dots span:nth-child(2) {
+    animation-delay: .18s
+  }
+
+  .dc-dots span:nth-child(3) {
+    animation-delay: .36s
+  }
+
+  /* QUICK REPLIES */
+  .dc-qr {
+    padding: 8px 12px;
+    background: #fff;
+    border-top: 1px solid #fdf6e9;
+    flex-shrink: 0
+  }
+
+  .dc-qrlabel {
+    font-size: 10px;
+    color: #98b0a4;
+    font-weight: 700;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    margin-bottom: 6px
+  }
+
+  .dc-qr-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap
+  }
+
+  .dc-qrbtn {
+    font-size: 11.5px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 1.5px solid #e8d5b0;
+    background: #fdf6e9;
+    color: #7a5c2e;
+    cursor: pointer;
+    transition: all .18s;
+    white-space: nowrap;
+    font-weight: 600;
+    font-family: 'Nunito', 'Segoe UI', sans-serif
+  }
+
+  .dc-qrbtn:hover {
+    background: #7a5c2e;
+    border-color: #7a5c2e;
+    color: #fff;
+    transform: translateY(-1px)
+  }
+
+  /* INPUT */
+  .dc-foot {
+    padding: 10px 12px 13px;
+    background: #fff;
+    border-top: 1px solid #fdf6e9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0
+  }
+
+  .dc-foot textarea {
+    flex: 1;
+    border: 1.5px solid #cdddd6;
+    border-radius: 20px;
+    padding: 9px 14px;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    color: #1e3a5f;
+    background: #f0f7ff;
+    max-height: 80px;
+    min-height: 38px;
+    line-height: 1.4;
+    transition: border-color .2s, box-shadow .2s;
+    font-family: 'Nunito', 'Segoe UI', sans-serif
+  }
+
+  .dc-foot textarea:focus {
+    border-color: #B88B4A;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(184, 139, 74, .1)
+  }
+
+  .dc-foot textarea::placeholder {
+    color: #aabdb4
+  }
+
+  .dc-sendbtn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #B88B4A;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform .18s, box-shadow .18s;
+    box-shadow: 0 2px 8px rgba(184, 139, 74, .35);
+    outline: none
+  }
+
+  .dc-sendbtn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 14px rgba(184, 139, 74, .45)
+  }
+
+  .dc-sendbtn:disabled {
+    opacity: .35;
+    cursor: default;
+    transform: none;
+    box-shadow: none
+  }
+
+  .dc-sendbtn svg {
+    width: 15px;
+    height: 15px;
+    fill: #fff;
+    margin-left: 1px
+  }
+
+  @keyframes dc-bounce {
+
+    0%,
+    80%,
+    100% {
+      transform: translateY(0);
+      opacity: .3
+    }
+
+    40% {
+      transform: translateY(-5px);
+      opacity: 1
+    }
+  }
+
+  @keyframes dc-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px)
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0)
+    }
+  }
+
+  @media(max-width:480px) {
+    #dc-win {
+      width: calc(100vw - 20px);
+      height: 70vh
+    }
+
+    #dc-wrap {
+      right: 10px;
+      bottom: 14px
+    }
+  }
+
+  /* ── Human mode banner ── */
+  .dc-human-bar {
+    background: linear-gradient(135deg, #1e3a5f, #2d5a8e);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,.1)
+  }
+  .dc-human-bar .dc-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4ade80;
+    animation: dc-pulse-dot 1.4s infinite;
+    flex-shrink: 0
+  }
+  .dc-human-bar.dc-waiting { background: linear-gradient(135deg,#7a5230,#b45309) }
+  .dc-human-bar.dc-waiting .dc-live-dot { background: #fbbf24 }
+  .dc-msg.dc-staff .dc-mavatar { background: #1e3a5f; color: #fff }
+  .dc-msg.dc-staff .dc-bubble {
+    background: #eef4ff; color: #1e3a5f;
+    border-radius: 14px 14px 14px 4px;
+    border: 1px solid #c7d9f5;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06)
+  }
+  .dc-qrbtn-human {
+    font-size: 11.5px; padding: 5px 11px; border-radius: 20px;
+    border: 1.5px solid #1e3a5f; background: #1e3a5f; color: #fff;
+    cursor: pointer; transition: all .18s; white-space: nowrap;
+    font-weight: 600; font-family: 'Nunito','Segoe UI',sans-serif
+  }
+  .dc-qrbtn-human:hover { background: #2d5a8e; border-color: #2d5a8e; transform: translateY(-1px) }
+</style>
+
+<div id="dc-wrap">
+    <div id="dc-win">
+        <div class="dc-head">
+            <div class="dc-avatar-wrap">
+                <div class="dc-avatar">🏨</div>
+                <div class="dc-online-dot"></div>
+            </div>
+            <div class="dc-hinfo">
+                <h4>Trợ lý DawnChill</h4>
+                <small>Luôn sẵn sàng hỗ trợ bạn</small>
+            </div>
+            <button class="dc-hbtn" onclick="dcClear()"
+                title="Xoá hội thoại">🗑</button>
+            <button class="dc-hbtn" onclick="dcToggle()" title="Đóng">✕</button>
+        </div>
+
+        <!-- Banner trạng thái human mode (ẩn mặc định) -->
+        <div class="dc-human-bar dc-waiting" id="dc-human-bar" style="display:none">
+            <span class="dc-live-dot"></span>
+            <span id="dc-human-bar-text">⏳ Đang chờ nhân viên tham gia...</span>
+        </div>
+
+        <div class="dc-body" id="dc-body"></div>
+
+        <div class="dc-qr" id="dc-qr-panel">
+            <div class="dc-qrlabel">Gợi ý nhanh</div>
+            <div class="dc-qr-row">
+                <button class="dc-qrbtn"
+                    onclick="dcQuick('Phòng nào còn trống hôm nay?')">🏨 Phòng
+                    trống</button>
+                <button class="dc-qrbtn"
+                    onclick="dcQuick('Gợi ý phòng cho 2 người')">👫 Gợi ý
+                    phòng</button>
+                <button class="dc-qrbtn"
+                    onclick="dcQuick('Menu ăn uống có gì?')">🍜 Menu</button>
+                <button class="dc-qrbtn"
+                    onclick="dcQuick('Tiện nghi khách sạn')">✨ Tiện
+                    nghi</button>
+                <button class="dc-qrbtn-human" id="dc-btn-human"
+                    onclick="dcRequestHuman()">👤 Gặp nhân viên</button>
+            </div>
+        </div>
+
+        <div class="dc-foot">
+            <textarea id="dc-input" placeholder="Nhập câu hỏi của bạn…" rows="1"
+                onkeydown="dcKey(event)" oninput="dcResize(this)"></textarea>
+            <button class="dc-sendbtn" id="dc-send" onclick="dcSend()">
+                <svg viewBox="0 0 24 24"><path
+                        d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <button id="dc-btn" onclick="dcToggle()" title="Trợ lý ảo DawnChill">
+        <svg class="dc-ico-chat" viewBox="0 0 24 24"><path
+                d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z" /></svg>
+        <svg class="dc-ico-x" viewBox="0 0 24 24"><path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>
+        <span id="dc-badge">1</span>
+    </button>
+</div>
+
+<script>
+(function(){
+  var API      = 'ajax/chatbot.php';
+  var HANDOFF  = 'ajax/chat_handoff.php';
+  var WELCOME  = '👋 Xin chào! Tôi là trợ lý ảo **DawnChill**.\n\nTôi có thể giúp bạn:\n- Xem phòng còn trống & giá\n- Gợi ý phòng theo nhu cầu\n- Xem menu nhà hàng\n- Tư vấn tiện nghi & dịch vụ\n\nBạn cần hỗ trợ gì?';
+
+  var hist = [], open = false;
+  // ── Human-mode state ──
+  var humanMode    = false;   // true khi đang ở chế độ nhân viên
+  var sessionId    = null;    // chat_sessions.id
+  var lastMsgId    = 0;
+  var pollTimer    = null;
+
+  try { hist = JSON.parse(sessionStorage.getItem('dc_hist') || '[]'); } catch(e) {}
+  if (hist.length) { hist.forEach(function(m){ m.role==='user'?_u(m.content,0):_b(m.content,0); }); }
+  else { _b(WELCOME, 0); }
+
+  // Kiểm tra nếu user đang ở giữa human session (reload trang)
+  _checkModeOnLoad();
+
+  setTimeout(function(){ if (!open) document.getElementById('dc-badge').classList.add('dc-show'); }, 2800);
+
+  // ── Toggle chat window ──────────────────────────────────────────────
+  window.dcToggle = function(){
+    open = !open;
+    document.getElementById('dc-win').classList.toggle('dc-show', open);
+    document.getElementById('dc-btn').classList.toggle('dc-open', open);
+    document.getElementById('dc-badge').classList.remove('dc-show');
+    if (open) setTimeout(function(){ document.getElementById('dc-input').focus(); _scroll(); }, 300);
+  };
+
+  // ── Gửi tin nhắn ────────────────────────────────────────────────────
+  window.dcSend = async function(){
+    var inp  = document.getElementById('dc-input');
+    var text = inp.value.trim(); if (!text) return;
+    inp.value = ''; dcResize(inp); _lock(1);
+    _u(text);
+
+    // ── Human mode: gửi đến nhân viên ──
+    if (humanMode && sessionId) {
+      try {
+        await fetch(HANDOFF, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action:'send', session_id: sessionId, message: text})
+        });
+      } catch(e) { _b('⚠️ Không thể gửi tin nhắn. Thử lại.'); }
+      _lock(0); return;
+    }
+
+    // ── Bot mode: gửi đến AI ──
+    hist.push({role:'user', content:text});
+    var t = _typing();
+    try {
+      var res = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({message:text, history:hist.slice(-6)})});
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      var d = await res.json();
+      var reply = d.reply || 'Xin lỗi, có lỗi xảy ra.';
+      t.remove(); _b(reply);
+      hist.push({role:'assistant', content:reply});
+      sessionStorage.setItem('dc_hist', JSON.stringify(hist.slice(-20)));
+
+      if (d.confirm_booking){
+        var bd = d.confirm_booking;
+        var wrap = document.createElement('div');
+        wrap.style.cssText='display:flex;gap:8px;padding:4px 0 4px 35px';
+        var fYes = document.createElement('button');
+        fYes.className='dc-qrbtn'; fYes.innerText='✅ Xác nhận đặt phòng';
+        fYes.onclick = async function(){
+          fYes.disabled=true; fYes.innerText='⏳ Đang xử lý...';
+          _u('Xác nhận đặt phòng');
+          hist.push({role:'user',content:'Xác nhận đặt phòng'});
+          var t2=_typing();
+          try {
+            var r2=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({action:'confirm_booking',booking_data:bd,history:hist.slice(-6)})});
+            var d2=await r2.json();
+            var doneMsg=d2.reply||'Đặt phòng thành công!';
+            t2.remove(); _b(doneMsg);
+            hist.push({role:'assistant',content:doneMsg});
+            sessionStorage.setItem('dc_hist',JSON.stringify(hist.slice(-20)));
+          } catch(e){ t2.remove(); _b('⚠️ Không thể kết nối.'); }
+        };
+        var fNo = document.createElement('button');
+        fNo.className='dc-qrbtn'; fNo.innerText='❌ Huỷ';
+        fNo.onclick=function(){ _b('Đã huỷ yêu cầu đặt phòng.'); wrap.remove(); };
+        wrap.appendChild(fYes); wrap.appendChild(fNo);
+        document.getElementById('dc-body').appendChild(wrap);
+        _scroll();
+      }
+
+      if (d.confirm_food_order){
+        var fo = d.confirm_food_order;
+        var wrap2 = document.createElement('div');
+        wrap2.style.cssText='display:flex;gap:8px;padding:4px 0 4px 35px';
+        var fYes = document.createElement('button');
+        fYes.className='dc-qrbtn'; fYes.innerText='✅ Xác nhận đặt món';
+        fYes.onclick = async function(){
+          fYes.disabled=true; fYes.innerText='⏳ Đang xử lý...';
+          _u('Xác nhận đặt món');
+          hist.push({role:'user',content:'Xác nhận đặt món'});
+          var t3=_typing();
+          try {
+            var r3=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({action:'confirm_food_order',order_data:fo,history:hist.slice(-6)})});
+            var d3=await r3.json();
+            var doneMsg=d3.reply||'Có lỗi xảy ra.';
+            t3.remove(); _b(doneMsg);
+            hist.push({role:'assistant',content:doneMsg});
+            sessionStorage.setItem('dc_hist',JSON.stringify(hist.slice(-20)));
+          } catch(e){ fYes.disabled=false; fYes.innerText='✅ Xác nhận đặt món'; t3.remove(); _b('⚠️ Không thể kết nối.'); }
+        };
+        var fNo2 = document.createElement('button');
+        fNo2.className='dc-qrbtn'; fNo2.innerText='❌ Huỷ';
+        fNo2.onclick=function(){ _b('Đã huỷ đặt món.'); wrap2.remove(); };
+        wrap2.appendChild(fYes); wrap2.appendChild(fNo2);
+        document.getElementById('dc-body').appendChild(wrap2);
+        _scroll();
+      }
+    } catch(e) { t.remove(); _b('⚠️ Không thể kết nối. Vui lòng thử lại.'); }
+    _lock(0);
+  };
+
+  // ── Khách bấm "Gặp nhân viên" ───────────────────────────────────────
+  window.dcRequestHuman = async function(){
+    var btn = document.getElementById('dc-btn-human');
+    btn.disabled = true;
+    _b('⏳ Đang gửi yêu cầu đến nhân viên lễ tân...');
+    try {
+      var res = await fetch(HANDOFF, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action:'request_human', bot_history: hist.slice(-20)})
+      });
+      var d = await res.json();
+      if (d.ok) {
+        sessionId = d.session_id;
+        _setHumanMode('waiting');
+      } else {
+        _b('❌ ' + (d.msg || 'Vui lòng đăng nhập để sử dụng tính năng này.'));
+        btn.disabled = false;
+      }
+    } catch(e) {
+      _b('⚠️ Không thể kết nối. Thử lại sau.');
+      btn.disabled = false;
+    }
+  };
+
+  // ── Cài trạng thái human mode ────────────────────────────────────────
+  function _setHumanMode(status) {
+    humanMode = true;
+    var bar     = document.getElementById('dc-human-bar');
+    var barText = document.getElementById('dc-human-bar-text');
+    var qrPanel = document.getElementById('dc-qr-panel');
+    var inp     = document.getElementById('dc-input');
+
+    bar.style.display = 'flex';
+    if (status === 'waiting') {
+      bar.className = 'dc-human-bar dc-waiting';
+      barText.textContent = '⏳ Đang chờ nhân viên tham gia...';
+      inp.placeholder = 'Chờ nhân viên kết nối...';
+      inp.disabled = true;
+      document.getElementById('dc-send').disabled = true;
+    } else if (status === 'active') {
+      bar.className = 'dc-human-bar';
+      barText.textContent = '🟢 Đang chat với nhân viên';
+      inp.placeholder = 'Nhắn tin với nhân viên...';
+      inp.disabled = false;
+      document.getElementById('dc-send').disabled = false;
+    }
+    // Ẩn quick-reply khi ở human mode
+    if (qrPanel) qrPanel.style.display = 'none';
+
+    // Bắt đầu polling
+    if (!pollTimer) _startPoll();
+  }
+
+  function _exitHumanMode() {
+    humanMode = false; sessionId = null; lastMsgId = 0;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    var bar     = document.getElementById('dc-human-bar');
+    var qrPanel = document.getElementById('dc-qr-panel');
+    var inp     = document.getElementById('dc-input');
+    bar.style.display = 'none';
+    if (qrPanel) qrPanel.style.display = '';
+    inp.placeholder = 'Nhập câu hỏi của bạn…';
+    inp.disabled = false;
+    document.getElementById('dc-send').disabled = false;
+    document.getElementById('dc-btn-human').disabled = false;
+  }
+
+  // ── Polling nhận tin nhắn nhân viên ─────────────────────────────────
+  function _startPoll() {
+    pollTimer = setInterval(async function(){
+      if (!humanMode || !sessionId) { clearInterval(pollTimer); pollTimer=null; return; }
+      try {
+        var res = await fetch(HANDOFF, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({action:'poll', session_id:sessionId, last_msg_id:lastMsgId})
+        });
+        var d = await res.json();
+        if (!d.ok) return;
+
+        // Cập nhật trạng thái
+        if (d.status === 'active' && document.getElementById('dc-human-bar').classList.contains('dc-waiting')) {
+          _setHumanMode('active');
+        }
+
+        // Hiện tin nhắn mới từ nhân viên
+        if (d.messages && d.messages.length) {
+          d.messages.forEach(function(m){
+            if (m.id > lastMsgId) lastMsgId = m.id;
+            if (m.sender === 'staff') {
+              _staff(m.sender_name, m.message);
+            }
+          });
+        }
+
+        // Nếu session đã closed → bot tiếp tục
+        if (d.status === 'closed') {
+          _exitHumanMode();
+          _b('🤖 Trợ lý ảo DawnChill tiếp tục hỗ trợ bạn. Bạn cần thêm gì không?');
+        }
+      } catch(e) {}
+    }, 3000);
+  }
+
+  // ── Kiểm tra mode khi load trang (user reload giữa chừng) ───────────
+  async function _checkModeOnLoad(){
+    try {
+      var res = await fetch(HANDOFF, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'check_mode'})
+      });
+      var d = await res.json();
+      if (d.mode === 'human' && d.session_id) {
+        sessionId = d.session_id;
+        lastMsgId = 0;
+        _setHumanMode(d.status === 'active' ? 'active' : 'waiting');
+      }
+    } catch(e) {}
+  }
+
+  window.dcQuick = function(t){
+    hist = hist.filter(function(m){ return !m.content || (!m.content.includes('||room_id:') && !m.content.includes('||food_step:')); });
+    sessionStorage.setItem('dc_hist', JSON.stringify(hist.slice(-20)));
+    document.getElementById('dc-input').value = t; dcSend();
+  };
+  window.dcKey  = function(e){ if (e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); dcSend(); } };
+  window.dcResize = function(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,80)+'px'; };
+  window.dcClear  = function(){
+    if (!confirm('Xoá toàn bộ lịch sử hội thoại?')) return;
+    hist = []; sessionStorage.removeItem('dc_hist');
+    document.getElementById('dc-body').innerHTML = '';
+    _b(WELCOME);
+  };
+
+  function _now(){ return new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}); }
+
+  function _u(text,anim){
+    anim = anim===undefined?1:anim;
+    var d = document.createElement('div'); d.className='dc-msg dc-user';
+    d.innerHTML = '<div class="dc-mavatar">👤</div><div class="dc-bgroup"><div class="dc-bubble">'+_esc(text)+'</div>'+(anim?'<div class="dc-time">'+_now()+'</div>':'')+'</div>';
+    if (!anim) d.style.animation='none';
+    document.getElementById('dc-body').appendChild(d); _scroll();
+  }
+
+  function _b(text,anim){
+    anim = anim===undefined?1:anim;
+    var d = document.createElement('div'); d.className='dc-msg dc-bot';
+    d.innerHTML = '<div class="dc-mavatar">🤖</div><div class="dc-bgroup"><div class="dc-bubble">'+_fmt(text)+'</div>'+(anim?'<div class="dc-time">'+_now()+'</div>':'')+'</div>';
+    if (!anim) d.style.animation='none';
+    document.getElementById('dc-body').appendChild(d); _scroll();
+  }
+
+  function _staff(name, text){
+    var d = document.createElement('div'); d.className='dc-msg dc-staff';
+    d.innerHTML = '<div class="dc-mavatar">👨‍💼</div><div class="dc-bgroup"><div class="dc-bubble">'+_fmt(text)+'</div><div class="dc-time">'+name+' · '+_now()+'</div></div>';
+    document.getElementById('dc-body').appendChild(d); _scroll();
+  }
+
+  function _typing(){
+    var d = document.createElement('div'); d.className='dc-msg dc-bot dc-typing';
+    d.innerHTML = '<div class="dc-mavatar">🤖</div><div class="dc-bubble"><div class="dc-dots"><span></span><span></span><span></span></div></div>';
+    document.getElementById('dc-body').appendChild(d); _scroll(); return d;
+  }
+
+  function _lock(s){ document.getElementById('dc-send').disabled=!!s; document.getElementById('dc-input').disabled=!!s; }
+  function _scroll(){ var b=document.getElementById('dc-body'); b.scrollTop=b.scrollHeight; }
+  function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function _fmt(s){
+    var escaped = _esc(s);
+    escaped = escaped.replace(/\|\|[^|]*\|\|/g,'');
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    escaped = escaped.replace(/\*(.*?)\*/g,'<em>$1</em>');
+    escaped = escaped.replace(/((?:^|\n)[•\-\+\*] .+)+/g,function(block){
+      var items = block.trim().split('\n').filter(function(l){return l.trim();});
+      var lis = items.map(function(l){ return '<li>'+l.replace(/^[•\-\+\*] /,'')+'</li>'; }).join('');
+      return '<ul>'+lis+'</ul>';
+    });
+    escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" style="color:#B88B4A;text-decoration:underline;">$1</a>');
+    escaped = escaped.replace(/\n/g,'<br>');
+    return escaped;
+  }
+})();
+</script>
+
+<!-- ════════ END CHATBOT ════════ -->
